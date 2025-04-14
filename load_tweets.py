@@ -112,9 +112,9 @@ def insert_tweet(connection,tweet):
     # this ensures that a tweet does not get "partially" loaded
 #    with connection.begin() as trans:
 
-    ########################################
-    # insert into the users table
-    ########################################
+            ########################################
+            # insert into the users table
+            ########################################
     if tweet['user']['url'] is None:
         user_id_urls = None
     else:
@@ -436,18 +436,20 @@ if __name__ == '__main__':
     # NOTE:
     # we reverse sort the filenames because this results in fewer updates to the users table,
     # which prevents excessive dead tuples and autovacuums
-    with engine.begin() as connection:
-        for filename in sorted(args.inputs, reverse=True):
-            with zipfile.ZipFile(filename, 'r') as archive: 
-                print(datetime.datetime.now(),filename)
-                for subfilename in sorted(archive.namelist(), reverse=True):
-                    with io.TextIOWrapper(archive.open(subfilename)) as f:
-                        for i,line in enumerate(f):
+#    with engine.begin() as connection:
+    for filename in sorted(args.inputs, reverse=True):
+        with zipfile.ZipFile(filename, 'r') as archive: 
+            print(datetime.datetime.now(),filename)
+            for subfilename in sorted(archive.namelist(), reverse=True):
+                with io.TextIOWrapper(archive.open(subfilename)) as f:
+                    for i,line in enumerate(f):
 
-                            # load and insert the tweet
-                            tweet = json.loads(line)
+                        # load and insert the tweet
+                        tweet = json.loads(line)
+                        with connection.begin() as trans:
+
                             insert_tweet(connection,tweet)
 
-                            # print message
-                            if i%args.print_every==0:
-                                print(datetime.datetime.now(),filename,subfilename,'i=',i,'id=',tweet['id'])
+                        # print message
+                        if i%args.print_every==0:
+                            print(datetime.datetime.now(),filename,subfilename,'i=',i,'id=',tweet['id'])
